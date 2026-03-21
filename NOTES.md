@@ -14,3 +14,12 @@ Where `<type>` is one of `+`, `-`, `:`, `$`, `*`.
 - `:`: Integer data
 - `$`: Bulk string data
 - `*`: Array data
+
+Client commands in Redis are passed as arrays of bulk strings over RESP.
+
+## 3/21/26
+Today I updated the TCP server to use `epoll` so that it can handle multiple connections. Redis should be single threaded, so there's no need to spawn any threads upon new client arrivals.
+
+I also started laying out the code for the RESP protocol parsing/serialization.
+
+The current issue I'm facing is figuring out how to parse all the commands. Redis is a streamed protocol, meaning that commands can be sent partially or in groups. This might take some extra care.
