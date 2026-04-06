@@ -23,3 +23,8 @@ Today I updated the TCP server to use `epoll` so that it can handle multiple con
 I also started laying out the code for the RESP protocol parsing/serialization.
 
 The current issue I'm facing is figuring out how to parse all the commands. Redis is a streamed protocol, meaning that commands can be sent partially or in groups. This might take some extra care.
+
+## 4/5/26
+Stemming from last time, I'm probably going to need to give each user their own independent message buffer. This way the server can handle all messages even if they are sent in chunks, queued, etc...
+
+I've implemented the per-cilent buffers. Now the next step after receiving a byte stream from `epoll` is to parse each client's buffers for commands. To do this, I'll need to build the `RespParser` class.

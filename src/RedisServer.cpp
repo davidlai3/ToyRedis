@@ -29,6 +29,10 @@ int RedisServer::set_nonblocking(int fd) {
 
 void RedisServer::close_client(int fd, int epfd) {
     epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
+    if (connections.find(fd) == connections.end()) {
+        printf("Tried to delete connection but doesn't exist...\n");
+    }
+    connections.erase(fd);
     close(fd);
 }
 
@@ -37,6 +41,7 @@ void RedisServer::add_connection(int sockfd, int epfd) {
         sockaddr_in client_addr{};
         socklen_t client_len = sizeof(client_addr);
 
+        // Try to accept connection
         int client_fd = accept(
             sockfd,
             reinterpret_cast<sockaddr*>(&client_addr),
@@ -51,6 +56,7 @@ void RedisServer::add_connection(int sockfd, int epfd) {
             break;
         }
 
+        // Set client fd as nonblocking
         if (set_nonblocking(client_fd) == -1) {
             printf("set_nonblocking(client_fd) failed...\n");
             close(client_fd);
@@ -61,12 +67,23 @@ void RedisServer::add_connection(int sockfd, int epfd) {
         client_event.events = EPOLLIN | EPOLLRDHUP;
         client_event.data.fd = client_fd;
 
+        // Add client connection to epoll instance
         if (epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &client_event) == -1) {
             printf("epoll_ctl(ADD client_fd) failed...\n");
             close(client_fd);
             continue;
         }
 
+        // Register client to server
+        if (connections.find(client_fd) != connections.end()) {
+            printf("Client already registered...\n");
+            close(client_fd);
+            break;
+        }
+        ClientConnection client{client_fd};
+        connections[client_fd] = client;
+
+        // Print ip of client
         char ipbuf[INET_ADDRSTRLEN] = {0};
         inet_ntop(AF_INET, &client_addr.sin_addr, ipbuf, sizeof(ipbuf));
 
@@ -78,9 +95,11 @@ void RedisServer::add_connection(int sockfd, int epfd) {
 
 void RedisServer::receive_command(int fd, int epfd, char* buff) {
     while (true) {
+        ClientConnection& client = connections[fd];
         ssize_t n = recv(fd, buff, BUFFER_SIZE, 0);
 
         if (n > 0) {
+            client.buff.insert(client.buff.end(), buff, buff+n);
             std::cout << "fd " << fd << " sent " << n << " bytes: ";
             std::cout.write(buff, n);
             std::cout << "\n";
