@@ -113,7 +113,7 @@ void RedisServer::receive_command(int fd, int epfd, char* buff) {
                 break;  // no more data for now
             }
             printf("recv failed...\n");
-            close_client(epfd, fd);
+            close_client(fd, epfd);
             break;
         }
     }
