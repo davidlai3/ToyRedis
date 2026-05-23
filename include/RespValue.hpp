@@ -23,17 +23,18 @@ struct RespArray {
 struct RespSimpleError {
     std::string msg;
 };
-using RespNull = std::monostate;
+
+using RespNullBulkString = std::monostate;
 
 struct RespValue {
     std::variant<
-        RespNull,
+        RespNullBulkString,
         RespSimpleString,
-        RespBulkString,
+        RespSimpleError,
         RespInteger,
-        RespArray,
-        RespSimpleError
-    > values;
+        RespBulkString,
+        RespArray
+    > value;
 };
 
 #endif
