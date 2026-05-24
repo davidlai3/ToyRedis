@@ -30,6 +30,56 @@ RespParserCode parse_simple_string(std::vector<char>& buff, RespValue& ret, size
     return RespParserCode::COMPLETE;
 }
 
+RespParserCode parse_simple_error(std::vector<char>& buff, RespValue& ret, size_t& cursor) {
+    std::string_view sv{buff.data()+cursor+1, buff.size()-cursor-1};
+
+    size_t pos = sv.find(CRLF);
+    if (pos == std::string::npos) {
+        return RespParserCode::INCOMPLETE;
+    }
+    if (pos == 0) {
+        return RespParserCode::ERROR;
+    }
+
+    std::string msg{sv.substr(0, pos)};
+    if (msg.find("\r") != std::string::npos) {
+        return RespParserCode::ERROR;
+    }
+    else if (msg.find("\n") != std::string::npos) {
+        return RespParserCode::ERROR;
+    }
+
+    ret.value = RespSimpleError{msg};
+    cursor += TYPE_TAG_LEN + pos + CRLF.size();
+
+    return RespParserCode::COMPLETE;
+}
+
+RespParserCode parse_integer(std::vector<char>& buff, RespValue& ret, size_t& cursor) {
+    std::string_view sv{buff.data()+cursor+1, buff.size()-cursor-1};
+
+    size_t pos = sv.find(CRLF);
+    if (pos == std::string::npos) {
+        return RespParserCode::INCOMPLETE;
+    }
+    if (pos == 0) {
+        return RespParserCode::ERROR;
+    }
+
+    long long val;
+    try {
+        val = std::stoll(std::string{sv.substr(0, pos)});
+    }
+    catch (...) {
+        return RespParserCode::ERROR;
+    }
+
+    ret.value = RespInteger{val};
+    cursor += TYPE_TAG_LEN + pos + CRLF.size();
+
+    return RespParserCode::COMPLETE;
+}
+
 RespParserCode parse_null_bulk_string(std::vector<char>& buff, RespValue& ret, size_t pos, size_t& cursor) {
     ret.value = RespNullBulkString{};
     cursor += TYPE_TAG_LEN + pos + CRLF.size();
@@ -79,31 +129,6 @@ RespParserCode parse_bulk_string(std::vector<char>& buff, RespValue& ret, size_t
     return RespParserCode::COMPLETE;
 }
 
-RespParserCode parse_integer(std::vector<char>& buff, RespValue& ret, size_t& cursor) {
-    std::string_view sv{buff.data()+cursor+1, buff.size()-cursor-1};
-
-    size_t pos = sv.find(CRLF);
-    if (pos == std::string::npos) {
-        return RespParserCode::INCOMPLETE;
-    }
-    if (pos == 0) {
-        return RespParserCode::ERROR;
-    }
-
-    long long val;
-    try {
-        val = std::stoll(std::string{sv.substr(0, pos)});
-    }
-    catch (...) {
-        return RespParserCode::ERROR;
-    }
-
-    ret.value = RespInteger{val};
-    cursor += TYPE_TAG_LEN + pos + CRLF.size();
-
-    return RespParserCode::COMPLETE;
-}
-
 RespParserCode parse_array(std::vector<char>& buff, RespValue& ret, size_t& cursor) {
     std::string_view sv{buff.data()+cursor+1, buff.size()-cursor-1};
 
@@ -149,31 +174,6 @@ RespParserCode parse_array(std::vector<char>& buff, RespValue& ret, size_t& curs
     return RespParserCode::COMPLETE;
 }
 
-RespParserCode parse_simple_error(std::vector<char>& buff, RespValue& ret, size_t& cursor) {
-    std::string_view sv{buff.data()+cursor+1, buff.size()-cursor-1};
-
-    size_t pos = sv.find(CRLF);
-    if (pos == std::string::npos) {
-        return RespParserCode::INCOMPLETE;
-    }
-    if (pos == 0) {
-        return RespParserCode::ERROR;
-    }
-
-    std::string msg{sv.substr(0, pos)};
-    if (msg.find("\r") != std::string::npos) {
-        return RespParserCode::ERROR;
-    }
-    else if (msg.find("\n") != std::string::npos) {
-        return RespParserCode::ERROR;
-    }
-
-    ret.value = RespSimpleError{msg};
-    cursor += TYPE_TAG_LEN + pos + CRLF.size();
-
-    return RespParserCode::COMPLETE;
-}
-
 RespParserCode parse_one_inner(std::vector<char>& buff, RespValue& ret, size_t& cursor) {
     if (cursor >= buff.size()) {
         return RespParserCode::INCOMPLETE;
@@ -196,7 +196,6 @@ RespParserCode parse_one_inner(std::vector<char>& buff, RespValue& ret, size_t& 
 }
 
 RespParserCode parse_one(std::vector<char>& buff, RespValue& ret) {
-
     if (buff.empty()) {
         return RespParserCode::INCOMPLETE;
     }

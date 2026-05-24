@@ -81,7 +81,7 @@ void RedisServer::add_connection(int sockfd, int epfd) {
             break;
         }
         ClientConnection client{client_fd};
-        connections[client_fd] = client;
+        connections.emplace(client_fd, client);
 
         // Print ip of client
         char ipbuf[INET_ADDRSTRLEN] = {0};
@@ -95,7 +95,7 @@ void RedisServer::add_connection(int sockfd, int epfd) {
 
 void RedisServer::receive_command(int fd, int epfd, char* buff) {
     while (true) {
-        ClientConnection& client = connections[fd];
+        ClientConnection& client = connections.at(fd);
         ssize_t n = recv(fd, buff, BUFFER_SIZE, 0);
 
         if (n > 0) {

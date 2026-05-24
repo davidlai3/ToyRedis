@@ -8,23 +8,23 @@
 // Forward declare because of RespArray
 struct RespValue;
 
+using RespNullBulkString = std::monostate;
+
 struct RespSimpleString {
     std::string msg;
 };
-struct RespBulkString {
+struct RespSimpleError {
     std::string msg;
 };
 struct RespInteger {
     long long val;
 };
+struct RespBulkString {
+    std::string msg;
+};
 struct RespArray {
     std::vector<RespValue> vals;
 };
-struct RespSimpleError {
-    std::string msg;
-};
-
-using RespNullBulkString = std::monostate;
 
 struct RespValue {
     std::variant<
