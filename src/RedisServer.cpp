@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 
+#include "../include/Debug.h"
 #include "../include/RedisServer.h"
 
 #define BUFFER_SIZE 4096
@@ -87,9 +88,9 @@ void RedisServer::add_connection(int sockfd, int epfd) {
         char ipbuf[INET_ADDRSTRLEN] = {0};
         inet_ntop(AF_INET, &client_addr.sin_addr, ipbuf, sizeof(ipbuf));
 
-        std::cout << "Accepted fd=" << client_fd
+        debug("Accepted fd=" << client_fd
             << " from " << ipbuf
-            << ":" << ntohs(client_addr.sin_port) << "\n";
+            << ":" << ntohs(client_addr.sin_port) << "\n");
     }
 }
 
@@ -100,15 +101,17 @@ void RedisServer::receive_command(int fd, int epfd, char* buff) {
 
         if (n > 0) {
             client.buff.insert(client.buff.end(), buff, buff+n);
-            std::cout << "fd " << fd << " sent " << n << " bytes: ";
-            std::cout.write(buff, n);
-            std::cout << "\n";
-        } else if (n == 0) {
+            debug("fd " << fd << " sent " << n << " bytes: "
+                        << std::string_view(buff, static_cast<size_t>(n))
+                        << "\n");
+        }
+        else if (n == 0) {
             // Peer performed an orderly shutdown
             std::cout << "Peer closed fd=" << fd << "\n";
             close_client(fd, epfd);
             break;
-        } else {
+        }
+        else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;  // no more data for now
             }
@@ -123,7 +126,6 @@ void RedisServer::start_server() {
     int sockfd, connfd;
     socklen_t len;
     struct sockaddr_in servaddr, cli; 
-
   
     // socket create and verification 
     sockfd = socket(AF_INET, SOCK_STREAM, 0); 
@@ -209,7 +211,7 @@ void RedisServer::start_server() {
 
             // Error / hangup / peer closed write side
             if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-                std::cout << "Closing fd=" << fd << "\n";
+                debug("Closing fd=" << fd << "\n");
                 close_client(epfd, fd);
                 continue;
             }
