@@ -11,10 +11,10 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <vector>
-#include <iostream>
 
 #include "../include/Debug.h"
 #include "../include/RedisServer.h"
+#include "../include/RespParser.h"
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 64
@@ -104,10 +104,24 @@ void RedisServer::receive_command(int fd, int epfd, char* buff) {
             debug("fd " << fd << " sent " << n << " bytes: "
                         << std::string_view(buff, static_cast<size_t>(n))
                         << "\n");
+            
+            RespValue ret;
+            RespParserCode code = parse_one(client.buff, ret); 
+
+            switch(code) {
+                case RespParserCode::COMPLETE:
+
+                case RespParserCode::INCOMPLETE:
+                    continue;
+                case RespParserCode::ERROR:
+                    printf("Invalid resp format...\n");
+                    close_client(fd, epfd);
+                    break;
+            }
         }
         else if (n == 0) {
             // Peer performed an orderly shutdown
-            std::cout << "Peer closed fd=" << fd << "\n";
+            debug("Peer closed fd=" << fd << "\n");
             close_client(fd, epfd);
             break;
         }

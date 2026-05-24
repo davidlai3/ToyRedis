@@ -1,5 +1,6 @@
 #include "../include/RedisServer.h"
 
 int main() {
-    RedisServer::start_server();
+    RedisServer server{};
+    server.start_server();
 }

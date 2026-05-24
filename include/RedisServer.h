@@ -4,18 +4,21 @@
 #include <unordered_map>
 
 #include "ClientConnection.hpp"
+#include "Database.h"
 
 class RedisServer {
 public:
-    static void start_server();
+    void start_server();
 private:
     static const short PORT = 6379;
-    static inline std::unordered_map<int, ClientConnection> connections;
 
-    static int set_nonblocking(int fd);
-    static void close_client(int fd, int epfd);
-    static void add_connection(int fd, int epfd);
-    static void receive_command(int fd, int epfd, char* buf);
+    std::unordered_map<int, ClientConnection> connections;
+    Database db;
+
+    int set_nonblocking(int fd);
+    void close_client(int fd, int epfd);
+    void add_connection(int fd, int epfd);
+    void receive_command(int fd, int epfd, char* buf);
 };
 
 #endif
