@@ -10,7 +10,7 @@ class RedisServer {
 public:
     void start_server();
 private:
-    static const short PORT = 6379;
+    static constexpr short PORT = 6379;
 
     std::unordered_map<int, ClientConnection> connections;
     Database db;
