@@ -43,6 +43,7 @@ For now, the command handlers only take `(std::vector<std::string_view> args, Da
 Today I finished building all the Database functions. Now all that's left is to build the handlers for each actual Redis command
 
 ## 5/29/26
-Today I finished writing all the handlers for each Redis command, and I also implemented the `dispatch` function in `CommandDispatcher.cpp`
+Today I finished writing all the handlers for each Redis command, and I also implemented the `dispatch` function in `CommandDispatcher.cpp`. The next step is to write the serializer for RESP for sending responses to clients.
 
-
+## 6/1/26
+Today I built the RESP

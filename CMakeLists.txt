@@ -17,6 +17,13 @@ add_executable(ToyRedisTests
     src/RespParser.cpp
 )
 
+add_executable(ToyRedisSerializerTests
+    tests/test_resp_serializer.cpp
+    src/RespSerializer.cpp
+    src/RespParser.cpp
+)
+
 target_compile_features(ToyRedisServer PRIVATE cxx_std_20)
 target_compile_features(ToyRedisClient PRIVATE cxx_std_20)
 target_compile_features(ToyRedisTests PRIVATE cxx_std_20)
+target_compile_features(ToyRedisSerializerTests PRIVATE cxx_std_20)
