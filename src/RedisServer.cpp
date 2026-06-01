@@ -12,9 +12,11 @@
 #include <errno.h>
 #include <vector>
 
+#include "../include/CommandDispatcher.h"
 #include "../include/Debug.h"
 #include "../include/RedisServer.h"
 #include "../include/RespParser.h"
+#include "../include/RespSerializer.h"
 
 #define BUFFER_SIZE 4096
 #define MAX_EVENTS 64
@@ -109,14 +111,32 @@ void RedisServer::receive_command(int fd, int epfd, char* buff) {
             RespParserCode code = parse_one(client.buff, ret); 
 
             switch(code) {
-                case RespParserCode::COMPLETE:
-
-                case RespParserCode::INCOMPLETE:
+                case RespParserCode::COMPLETE: {
+                    std::vector<char> resp = serialize(dispatch(ret, db));
+                    bool err = false;
+                    size_t sent = 0;
+                    while (sent < resp.size()) {
+                        size_t n = send(fd, resp.data()+sent, resp.size()-sent, 0);
+                        if (n < 0) {
+                            printf("Response send failed...\n");
+                            close_client(fd, epfd);
+                            err = true;
+                            break;
+                        }
+                        sent += n;
+                    }
+                    if (err) {
+                        break;
+                    }
+                }
+                case RespParserCode::INCOMPLETE: {
                     continue;
-                case RespParserCode::ERROR:
+                }
+                case RespParserCode::ERROR: {
                     printf("Invalid resp format...\n");
                     close_client(fd, epfd);
                     break;
+                }
             }
         }
         else if (n == 0) {

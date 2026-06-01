@@ -46,4 +46,4 @@ Today I finished building all the Database functions. Now all that's left is to 
 Today I finished writing all the handlers for each Redis command, and I also implemented the `dispatch` function in `CommandDispatcher.cpp`. The next step is to write the serializer for RESP for sending responses to clients.
 
 ## 6/1/26
-Today I built the RESP
+Today I built the RESP serializer and wired it all up to the Redis Server. We now have a basic  functioning Redis Server! Next, I'd like to potentially get a pub/sub feature working.
